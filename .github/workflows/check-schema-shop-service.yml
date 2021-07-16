@@ -1,12 +1,12 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Deploy Shop Service and Register Schema
+name: Validate Shop Service Schema
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the noragrets branch
 on:
-  push:
-    branches: [noragrets]
+  pull_request:
+    types: [opened, reopened, synchronize]
     paths:
       - "shop-service/*"
 
@@ -24,21 +24,12 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
 
-      - name: Deploy to fly
-        uses: superfly/flyctl-actions@master
-        env:
-          FLY_PROJECT_PATH: ./shop-service
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-        with:
-          args: "deploy"
-
       # Runs a set of commands using the runners shell
-      - name: Push schema to registry
+      - name: Check schema against registry
         working-directory: ./shop-service
         env:
           APOLLO_KEY: ${{ secrets.APOLLO_KEY }}
         run: |
-          npx -p @apollo/rover rover subgraph publish the-worst-dev-z1n1vn@current \
+          npx -p @apollo/rover rover subgraph check the-worst-dev-z1n1vn@current \
             --name=shop \
-            --schema=./schema.graphql \
-            --routing-url=${{ secrets.SHOP_SERVICE_URL }}
+            --schema=./schema.graphql
